@@ -9,54 +9,7 @@ using System.Threading.Tasks;
 namespace Calc
 {
     internal class Program
-    {
-        static void Calc(ref List<double> values, ref List<char> signs)
-        {
-            double result;
-            int i = 0;
-            while (i < signs.Count)
-            {
-                if (signs[i] == '*')
-                {
-                    result = values[i] * values[i + 1];
-                    values[i + 1] = result;
-                    values.RemoveAt(i);
-                    signs.RemoveAt(i);
-                }
-                else if (signs[i] == '/')
-                {
-                    result = values[i] / values[i + 1];
-                    values[i + 1] = result;
-                    values.RemoveAt(i);
-                    signs.RemoveAt(i);
-                }
-                else i++;
-            }
-        }
-        static double Calc(List<double> values, List<char> signs)
-        {
-            double result = 0;
-            int i = 0;
-            while (i < signs.Count)
-            {
-                if (signs[i] == '+')
-                {
-                    result = values[i] + values[i + 1];
-                    values[i + 1] = result;
-                    values.RemoveAt(i);
-                    signs.RemoveAt(i);
-                }
-                else if (signs[i] == '-')
-                {
-                    result = values[i] - values[i + 1];
-                    values[i + 1] = result;
-                    values.RemoveAt(i);
-                    signs.RemoveAt(i);
-                }
-                else i++;
-            }
-            return result;
-        }
+    {        
         static void Main(string[] args)
         {
             Console.Write("Введите выражение: ");
@@ -72,14 +25,50 @@ namespace Calc
                 if (expression[i] == '*') signs.Add('*');
                 if (expression[i] == '/') signs.Add('/');
             }
-
             for (int i = 0; i < signs.Count; i++)
             {
                 Console.Write($"{values[i]} {signs[i]} ");
             }
             Console.Write($"{values[values.Count - 1]} = ");
-            Calc(ref values, ref signs);
-            double result = Calc(values, signs);
+            double result = 0;
+            int it = 0;
+            while (it < signs.Count)
+            {
+                if (signs[it] == '*')
+                {
+                    result = values[it] * values[it + 1];
+                    values[it + 1] = result;
+                    values.RemoveAt(it);
+                    signs.RemoveAt(it);
+                }
+                else if (signs[it] == '/')
+                {
+                    result = values[it] / values[it + 1];
+                    values[it + 1] = result;
+                    values.RemoveAt(it);
+                    signs.RemoveAt(it);
+                }
+                else it++;
+            }
+            it = 0;
+            while (it < signs.Count)
+            {
+                if (signs[it] == '+')
+                {
+                    result = values[it] + values[it + 1];
+                    values[it + 1] = result;
+                    values.RemoveAt(it);
+                    signs.RemoveAt(it);
+                }
+                else if (signs[it] == '-')
+                {
+                    result = values[it] - values[it + 1];
+                    values[it + 1] = result;
+                    values.RemoveAt(it);
+                    signs.RemoveAt(it);
+                }
+                else it++;
+            }
             Console.WriteLine(result);
         }
     }
