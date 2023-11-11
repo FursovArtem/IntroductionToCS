@@ -23,7 +23,7 @@ namespace Calc
             #endregion
 
         }
-        #region не получилось :-(
+        #region OLD_TRY
         /* private static string Explorer(string expression)
          {
              string changed_expr = expression;
