@@ -1,13 +1,159 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.Data.Common;
+using System.Net.Mail;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Calc
 {
+    public class ReversePolishNotation
+    {
+        private List<string> operators;
+        private List<string> standart_operators = new List<string>(new string[] { "(", ")", "+", "-", "*", "/", "^" });
+        public ReversePolishNotation()
+        {
+            operators = new List<string>(standart_operators);
+        }
+
+        private IEnumerable<string> Parse(string expr)
+        {
+            int position = 0;
+            while (position < expr.Length)
+            {
+                string s = string.Empty + expr[position];
+                if (!standart_operators.Contains(expr[position].ToString()))
+                {
+                    if (Char.IsDigit(expr[position]))
+                    {
+                        for (int i = position + 1; i < expr.Length && Char.IsDigit(expr[i]) || expr[i] == ','; i++)
+                            s += expr[i];
+                    }
+                    else if (Char.IsLetter(expr[position]))
+                    {
+                        for (int i = position + 1; i < expr.Length && Char.IsLetter(expr[i]) || Char.IsDigit(expr[i]); i++)
+                            s += expr[i];
+                    }
+                }
+                yield return s;
+                position += s.Length;
+            }
+        }
+        private byte GetPriority(string s)
+        {
+            switch (s)
+            {
+                case "(":
+                case ")":
+                    return 0;
+                case "+":
+                case "-":
+                    return 1;
+                case "*":
+                case "/":
+                    return 2;
+                case "^":
+                    return 3;
+                default: return 4;
+            }
+        }
+        public string[] ConvertToPolishNotation(string expr)
+        {
+            List<string> outParsed = new List<string>();
+            Stack<string> stack = new Stack<string>();
+            foreach (string c in Parse(expr))
+            {
+                if (operators.Contains(c))
+                {
+                    if (stack.Count > 0 && !c.Equals("("))
+                    {
+                        if (c.Equals(")"))
+                        {
+                            string s = stack.Pop();
+                            while (s != "(")
+                            {
+                                outParsed.Add(s);
+                                s = stack.Pop();
+                            }
+                        }
+                        else if (GetPriority(c) > GetPriority(stack.Peek())) stack.Push(c);
+                        else
+                        {
+                            while (stack.Count > 0 && GetPriority(c) <= GetPriority(stack.Peek()))
+                                outParsed.Add(stack.Pop());
+                            stack.Push(c);
+                        }
+                    }
+                    else stack.Push(c);
+                }
+                else outParsed.Add(c);
+            }
+            if (stack.Count > 0)
+            {
+                foreach (string c in stack) outParsed.Add(c);
+            }
+            return outParsed.ToArray();
+        }
+        public decimal Calc(string expr)
+        {
+            Stack<string> stack = new Stack<string>();
+            Queue<string> queue = new Queue<string>(ConvertToPolishNotation(expr));
+            string str = queue.Dequeue();
+            while (queue.Count >= 0)
+            {
+                if (!operators.Contains(str))
+                {
+                    stack.Push(str);
+                    str = queue.Dequeue();
+                }
+                else
+                {
+                    decimal sum = 0;
+                    switch (str)
+                    {
+                        case "+":
+                            {
+                                decimal a = Convert.ToDecimal(stack.Pop());
+                                decimal b = Convert.ToDecimal(stack.Pop());
+                                sum = a + b;
+                                break;
+                            }
+                        case "-":
+                            {
+                                decimal a = Convert.ToDecimal(stack.Pop());
+                                decimal b = Convert.ToDecimal(stack.Pop());
+                                sum = b - a;
+                                break;
+                            }
+                        case "*":
+                            {
+                                decimal a = Convert.ToDecimal(stack.Pop());
+                                decimal b = Convert.ToDecimal(stack.Pop());
+                                sum = a * b;
+                                break;
+                            }
+                        case "/":
+                            {
+                                decimal a = Convert.ToDecimal(stack.Pop());
+                                decimal b = Convert.ToDecimal(stack.Pop());
+                                sum = b / a;
+                                break;
+                            }
+                        case "^":
+                            {
+                                decimal a = Convert.ToDecimal(stack.Pop());
+                                decimal b = Convert.ToDecimal(stack.Pop());
+                                sum = Convert.ToDecimal(Math.Pow(Convert.ToDouble(b), Convert.ToDouble(a)));
+                                break;
+                            }
+                    }
+                    stack.Push(sum.ToString());
+                    if (queue.Count > 0) str = queue.Dequeue();
+                    else break;
+                }
+            }
+            return Convert.ToDecimal(stack.Pop());
+        }
+    }
     internal class Program
     {
         static void Main(string[] args)
@@ -21,35 +167,10 @@ namespace Calc
             }
             Console.Write($"{values[values.Count - 1]} = ");*/
             #endregion
-
+            ReversePolishNotation rpn = new ReversePolishNotation();
+            Console.WriteLine(rpn.Calc(expression));
         }
-        #region OLD_TRY
-        /* private static string Explorer(string expression)
-         {
-             string changed_expr = expression;
-             for (int i = 0; i < changed_expr.Length; i++)
-             {
-                 if (changed_expr[i] == '(')
-                 {
-                     for (int j = i + 1; j < changed_expr.Length - i; j++)
-                     {
-                         if (changed_expr[j] == '(')
-                         {
-                             int index = changed_expr.Length - 1;
-                             while (changed_expr[index] != ')') index--;
-                             Explorer(changed_expr.Substring(j, index - j)); 
-                         }
-                         if (changed_expr[j] == ')')
-                         {
-                             changed_expr = Convert.ToString(Calc(changed_expr.Substring(i + 1, i + j - 1)));
-                             return expression.Replace(changed_expr.Substring(i, i + j + 1), changed_expr);
-                         }
-                     }
-                 }
-             }
-             return expression;
-         }*/
-        #endregion
+        #region OLD_CALC
         private static double Calc(string expression)
         {
             String[] numbers = expression.Split('+', '-', '*', '/');
@@ -104,5 +225,6 @@ namespace Calc
             }
             return result;
         }
+        #endregion
     }
 }
