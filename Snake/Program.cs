@@ -1,13 +1,4 @@
 ﻿using System;
-using System.CodeDom;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Diagnostics;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Schema;
 
 namespace Snake
 {
@@ -94,6 +85,7 @@ namespace Snake
     {
         private int x;
         private int y;
+        private int counter;
         private readonly Field field;
         private readonly char head;
         private readonly char[,] tail;
@@ -108,6 +100,7 @@ namespace Snake
             this.head = head;
             this.color = color;
             food = new Food(field, this);
+            counter = 0;
         }
         public int X { get { return x; } }
         public int Y { get { return y; } }
@@ -115,6 +108,8 @@ namespace Snake
 
         public void Start()
         {
+            field.Draw();
+            Counter();
             Console.ForegroundColor = color;
             Console.CursorVisible = false;
             Teleport();
@@ -133,6 +128,16 @@ namespace Snake
             Console.CursorLeft = y;
             Console.Write(field.AField[x, y] = ' ');
         }
+        private void FullClear()
+        {
+            for (int i = field.HeightFirst + 1; i < field.HeightLast - 1; i++)
+            {
+                for (int j = field.WidthFirst + 1; j < field.WidthLast - 1; j++)
+                {
+                    Console.Write(field.AField[i, j] = ' ');
+                }
+            }
+        }
         private void Teleport()
         {
             Random rand = new Random();
@@ -141,13 +146,54 @@ namespace Snake
             y = rand.Next(field.WidthFirst + 1, field.WidthLast - 1);
             Set();
         }
+        private void Counter()
+        {
+            string CounterMessage = "$$$ Counter: ";
+            Console.CursorTop = field.HeightLast + 1;
+            Console.CursorLeft = (field.WidthFirst + field.WidthLast - CounterMessage.Length - 1) / 2;
+            Console.ForegroundColor = food.Color;
+            Console.Write(CounterMessage + counter + "   ");
+        }
+        private bool GameOver()
+        {
+            bool flag = false;
+            if (x == field.HeightFirst || x == field.HeightLast - 1 ||
+                y == field.WidthFirst || y == field.WidthLast - 1)
+                flag = true;
+            return flag;
+        }
         public void Move()
         {
             ConsoleKey key;
             do
             {
+                if (GameOver())
+                {
+                    string GameOverMessage = "Вы проиграли. R - reset...";
+                    Console.CursorTop = (field.HeightFirst + field.HeightLast) / 2;
+                    Console.CursorLeft = (field.WidthFirst + field.WidthLast - GameOverMessage.Length) / 2;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(GameOverMessage);
+                    Console.CursorTop = field.HeightLast + 3;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    key = Console.ReadKey(true).Key;
+                    switch (key)
+                    {
+                        case ConsoleKey.R:
+                            {
+                                counter = 0;
+                                FullClear();
+                                Teleport();
+                                Start();
+                                break;
+                            }
+                    }
+                    if (key != ConsoleKey.R) break;
+                }
                 if (!Program.CheckIn(field.AField, food.Body))
                 {
+                    counter++;
+                    Counter();
                     food.Draw();
                     Console.ForegroundColor = color;
                 }
@@ -157,7 +203,7 @@ namespace Snake
                     case ConsoleKey.UpArrow:
                     case ConsoleKey.W:
                         {
-                            if (x > field.HeightFirst + 1)
+                            if (x > field.HeightFirst)
                             {
                                 Clear();
                                 x--;
@@ -168,7 +214,7 @@ namespace Snake
                     case ConsoleKey.DownArrow:
                     case ConsoleKey.S:
                         {
-                            if (x < field.HeightLast - 2)
+                            if (x < field.HeightLast - 1)
                             {
                                 Clear();
                                 x++;
@@ -179,7 +225,7 @@ namespace Snake
                     case ConsoleKey.LeftArrow:
                     case ConsoleKey.A:
                         {
-                            if (y > field.WidthFirst + 1)
+                            if (y > field.WidthFirst)
                             {
                                 Clear();
                                 y--;
@@ -190,7 +236,7 @@ namespace Snake
                     case ConsoleKey.RightArrow:
                     case ConsoleKey.D:
                         {
-                            if (y < field.WidthLast - 2)
+                            if (y < field.WidthLast - 1)
                             {
                                 Clear();
                                 y++;
@@ -198,9 +244,15 @@ namespace Snake
                             }
                             break;
                         }
-                    case ConsoleKey.T:
-                        Teleport();
-                        break;
+                    case ConsoleKey.T: Teleport(); break;
+                    case ConsoleKey.R:
+                        {
+                            counter = 0;
+                            FullClear();
+                            Teleport();
+                            Start();
+                            break;
+                        }
                 }
             } while (key != ConsoleKey.Escape);
         }
@@ -221,6 +273,7 @@ namespace Snake
             this.color = color;
         }
         public char Body { get { return body; } }
+        public ConsoleColor Color { get { return color; } }
         public void Draw()
         {
             Random rand = new Random();
@@ -244,8 +297,8 @@ namespace Snake
     {
         static void Main(string[] args)
         {
-            int horizontal = 50, vertical = 20, left_offset = 10, top_offset = 3;
-            Field field = new Field(horizontal, vertical, left_offset, top_offset);
+            int horizontal = 100, vertical = 25, horizontal2 = 20, vertical2 = 5;
+            Field field = new Field(horizontal, vertical, horizontal2, vertical2);
             Player player = new Player(field, ConsoleColor.DarkCyan);
             field.Draw();
             player.Start();
