@@ -100,7 +100,7 @@ namespace Snake
         private readonly ConsoleColor color;
         private readonly Food food;
 
-        public Player(Field field, ConsoleColor color = default, char head = (char)164)
+        public Player(Field field, ConsoleColor color = ConsoleColor.White, char head = (char)164)
         {
             this.field = field;
             x = field.HeightFirst + 1;
@@ -246,7 +246,7 @@ namespace Snake
         {
             int horizontal = 50, vertical = 20, left_offset = 10, top_offset = 3;
             Field field = new Field(horizontal, vertical, left_offset, top_offset);
-            Player player = new Player(field);
+            Player player = new Player(field, ConsoleColor.DarkCyan);
             field.Draw();
             player.Start();
             player.Move();
