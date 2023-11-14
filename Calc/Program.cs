@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Net.Mail;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Calc
 {
-    public class ReversePolishNotation
+    class ReversePolishNotation
     {
-        private List<string> operators;
-        private List<string> standart_operators = new List<string>(new string[] { "(", ")", "+", "-", "*", "/", "^" });
+        private readonly List<string> operators;
+        private readonly List<string> standart_operators = new List<string>(new string[] { "(", ")", "+", "-", "*", "/", "^" });
         public ReversePolishNotation()
         {
             operators = new List<string>(standart_operators);
