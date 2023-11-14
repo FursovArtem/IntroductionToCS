@@ -171,7 +171,6 @@ namespace Calc
             }
             else Console.WriteLine(Calc(expression));
         }
-        #region OLD_CALC
         private static double Calc(string expression)
         {
             String[] numbers = expression.Split('+', '-', '*', '/');
@@ -226,6 +225,5 @@ namespace Calc
             }
             return result;
         }
-        #endregion
     }
 }
