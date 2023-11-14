@@ -1,15 +1,16 @@
 ﻿using System;
+using System.Net.Security;
 
 namespace Snake
 {
     public class Field
     {
-        const char UpLeftCorner = '╔';
-        const char DownLeftCorner = '╚';
-        const char UpRightCorner = '╗';
-        const char DownRightCorner = '╝';
-        const char Vertical = '║';
-        const char Horizontal = '═';
+        public const char UpLeftCorner = '╔';
+        public const char DownLeftCorner = '╚';
+        public const char UpRightCorner = '╗';
+        public const char DownRightCorner = '╝';
+        public const char Vertical = '║';
+        public const char Horizontal = '═';
 
         private int widthFirst;
         private int widthLast;
@@ -86,10 +87,12 @@ namespace Snake
         private int x;
         private int y;
         private int counter;
-        private readonly Field field;
         private readonly char head;
-        private readonly char[,] tail;
+        private readonly char tail;
+        private int tailCount;
+        private ConsoleKey prevKey;
         private readonly ConsoleColor color;
+        private readonly Field field;
         private readonly Food food;
 
         public Player(Field field, ConsoleColor color = ConsoleColor.White, char head = (char)164)
@@ -101,10 +104,11 @@ namespace Snake
             this.color = color;
             food = new Food(field, this);
             counter = 0;
+            tail = '*';
+            tailCount = 0;
         }
         public int X { get { return x; } }
         public int Y { get { return y; } }
-        //public char[,] Tail { get { return tail; } }
 
         public void Start()
         {
@@ -154,41 +158,179 @@ namespace Snake
             Console.ForegroundColor = food.Color;
             Console.Write(CounterMessage + counter + "   ");
         }
-        private bool GameOver()
+        private bool GameOverCheck()
         {
             bool flag = false;
             if (x == field.HeightFirst || x == field.HeightLast - 1 ||
-                y == field.WidthFirst || y == field.WidthLast - 1)
+                y == field.WidthFirst || y == field.WidthLast - 1 ||
+                field.AField[x, y] == tail || field.AField[x, y] == tail)
                 flag = true;
             return flag;
+        }
+        private void GameOver()
+        {
+            ConsoleKey key;
+            string GameOverMessage = "Вы проиграли. R - reset...";
+            Console.CursorTop = (field.HeightFirst + field.HeightLast) / 2;
+            Console.CursorLeft = (field.WidthFirst + field.WidthLast - GameOverMessage.Length) / 2;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(GameOverMessage);
+            Console.CursorTop = field.HeightLast + 3;
+            Console.ForegroundColor = ConsoleColor.White;
+            key = Console.ReadKey(true).Key;
+            switch (key)
+            {
+                case ConsoleKey.R:
+                    {
+                        counter = 0;
+                        tailCount = 0;
+                        prevKey = ConsoleKey.Clear;
+                        FullClear();
+                        Teleport();
+                        Start();
+                        break;
+                    }
+                default: Environment.Exit(0); break;
+            }
+        }
+        private void Tail(int x, int y)
+        {
+            Console.CursorTop = x;
+            Console.CursorLeft = y;
+            Console.Write(field.AField[x, y] = tail);
+        }
+        private void TailMoveUp(int x, int y)
+        {
+            int i = x + 1, c = 0;
+            while (c < tailCount)
+            {
+                if (field.AField[i, y] == tail)
+                {
+                    break;
+                }
+                Console.CursorTop = i;
+                Console.CursorLeft = y;
+                Console.Write(field.AField[i, y] = tail);
+                i++; c++;
+                Console.CursorTop = i;
+                Console.CursorLeft = y;
+                Console.Write(field.AField[i, y] = ' ');
+            }
+        }
+        private void TailMoveDown(int x, int y)
+        {
+            int i = x - 1, c = 0;
+            while (c < tailCount)
+            {
+                if (field.AField[i, y] == tail)
+                {
+                    break;
+                }
+                Console.CursorTop = i;
+                Console.CursorLeft = y;
+                Console.Write(field.AField[i, y] = tail);
+                i--; c++;
+                Console.CursorTop = i;
+                Console.CursorLeft = y;
+                Console.Write(field.AField[i, y] = ' ');
+            }
+        }
+        private void TailMoveLeft(int x, int y)
+        {
+            int i = y + 1, c = 0;
+            while (c < tailCount)
+            {
+                if (field.AField[x, i] == tail)
+                {
+                    break;
+                }
+                Console.CursorTop = x;
+                Console.CursorLeft = i;
+                Console.Write(field.AField[x, i] = tail);
+                i++; c++;
+                Console.CursorTop = x;
+                Console.CursorLeft = i;
+                Console.Write(field.AField[x, i] = ' ');
+            }
+        }
+        private void TailMoveRight(int x, int y)
+        {
+            int i = y - 1, c = 0;
+            while (c < tailCount)
+            {
+                if (field.AField[x, i] == tail)
+                {
+                    break;
+                }
+                Console.CursorTop = x;
+                Console.CursorLeft = i;
+                Console.Write(field.AField[x, i] = tail);
+                i--; c++;
+                Console.CursorTop = x;
+                Console.CursorLeft = i;
+                Console.Write(field.AField[x, i] = ' ');
+            }
+        }
+        private void RotateUp(int x, int y)
+        {
+            if (tailCount > 0)
+            {
+                if (prevKey == ConsoleKey.D || prevKey == ConsoleKey.RightArrow ||
+                    prevKey == ConsoleKey.A || prevKey == ConsoleKey.LeftArrow)
+                {
+                    Console.CursorTop = x;
+                    Console.CursorLeft = y;
+                    Console.Write(field.AField[x, y] = tail);
+                }
+            }
+        }
+        private void RotateDown(int x, int y)
+        {
+            if (tailCount > 0)
+            {
+                if (prevKey == ConsoleKey.D || prevKey == ConsoleKey.RightArrow ||
+                    prevKey == ConsoleKey.A || prevKey == ConsoleKey.LeftArrow)
+                {
+                    Console.CursorTop = x;
+                    Console.CursorLeft = y;
+                    Console.Write(field.AField[x, y] = tail);
+                }
+            }
+        }
+        private void RotateLeft(int x, int y)
+        {
+            if (tailCount > 0)
+            {
+                if (prevKey == ConsoleKey.W || prevKey == ConsoleKey.UpArrow ||
+                    prevKey == ConsoleKey.S || prevKey == ConsoleKey.DownArrow)
+                {
+                    Console.CursorTop = x;
+                    Console.CursorLeft = y;
+                    Console.Write(field.AField[x, y] = tail);
+                }
+            }
+        }
+        private void RotateRight(int x, int y)
+        {
+            if (tailCount > 0)
+            {
+                if (prevKey == ConsoleKey.W || prevKey == ConsoleKey.UpArrow ||
+                    prevKey == ConsoleKey.S || prevKey == ConsoleKey.DownArrow)
+                {
+                    Console.CursorTop = x;
+                    Console.CursorLeft = y;
+                    Console.Write(field.AField[x, y] = tail);
+                }
+            }
         }
         public void Move()
         {
             ConsoleKey key;
             do
             {
-                if (GameOver())
+                if (GameOverCheck())
                 {
-                    string GameOverMessage = "Вы проиграли. R - reset...";
-                    Console.CursorTop = (field.HeightFirst + field.HeightLast) / 2;
-                    Console.CursorLeft = (field.WidthFirst + field.WidthLast - GameOverMessage.Length) / 2;
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(GameOverMessage);
-                    Console.CursorTop = field.HeightLast + 3;
-                    Console.ForegroundColor = ConsoleColor.White;
-                    key = Console.ReadKey(true).Key;
-                    switch (key)
-                    {
-                        case ConsoleKey.R:
-                            {
-                                counter = 0;
-                                FullClear();
-                                Teleport();
-                                Start();
-                                break;
-                            }
-                    }
-                    if (key != ConsoleKey.R) break;
+                    GameOver();
                 }
                 if (!Program.CheckIn(field.AField, food.Body))
                 {
@@ -203,45 +345,109 @@ namespace Snake
                     case ConsoleKey.UpArrow:
                     case ConsoleKey.W:
                         {
+                            if (prevKey == ConsoleKey.S || prevKey == ConsoleKey.DownArrow) break;
                             if (x > field.HeightFirst)
                             {
                                 Clear();
+                                RotateUp(x, y);
                                 x--;
+                                if (GameOverCheck())
+                                {
+                                    Set();
+                                    TailMoveUp(x, y);
+                                    GameOver();
+                                    break;
+                                }
                                 Set();
+                                TailMoveUp(x, y);
+                                if (x == food.X && y == food.Y)
+                                {
+                                    Tail(x + 1, y);
+                                    tailCount++;
+                                }
                             }
+                            prevKey = key;
                             break;
                         }
                     case ConsoleKey.DownArrow:
                     case ConsoleKey.S:
                         {
+                            if (prevKey == ConsoleKey.W || prevKey == ConsoleKey.UpArrow) break;
                             if (x < field.HeightLast - 1)
                             {
                                 Clear();
+                                RotateDown(x, y);
                                 x++;
+                                if (GameOverCheck())
+                                {
+                                    Set();
+                                    TailMoveDown(x, y);
+                                    GameOver();
+                                    break;
+                                }
                                 Set();
+                                TailMoveDown(x, y);
+                                if (x == food.X && y == food.Y)
+                                {
+                                    Tail(x - 1, y);
+                                    tailCount++;
+                                }
                             }
+                            prevKey = key;
                             break;
                         }
                     case ConsoleKey.LeftArrow:
                     case ConsoleKey.A:
                         {
+                            if (prevKey == ConsoleKey.D || prevKey == ConsoleKey.RightArrow) break;
                             if (y > field.WidthFirst)
                             {
                                 Clear();
+                                RotateLeft(x, y);
                                 y--;
+                                if (GameOverCheck())
+                                {
+                                    Set();
+                                    TailMoveLeft(x, y);
+                                    GameOver();
+                                    break;
+                                }
                                 Set();
+                                TailMoveLeft(x, y);
+                                if (x == food.X && y == food.Y)
+                                {
+                                    Tail(x, y + 1);
+                                    tailCount++;
+                                }
                             }
+                            prevKey = key;
                             break;
                         }
                     case ConsoleKey.RightArrow:
                     case ConsoleKey.D:
                         {
+                            if (prevKey == ConsoleKey.A || prevKey == ConsoleKey.LeftArrow) break;
                             if (y < field.WidthLast - 1)
                             {
                                 Clear();
+                                RotateRight(x, y);
                                 y++;
+                                if (GameOverCheck())
+                                {
+                                    Set();
+                                    TailMoveRight(x, y);
+                                    GameOver();
+                                    break;
+                                }
                                 Set();
+                                TailMoveRight(x, y);
+                                if (x == food.X && y == food.Y)
+                                {
+                                    Tail(x, y - 1);
+                                    tailCount++;
+                                }
                             }
+                            prevKey = key;
                             break;
                         }
                     case ConsoleKey.T: Teleport(); break;
@@ -259,6 +465,8 @@ namespace Snake
     }
     public class Food
     {
+        private int x;
+        private int y;
         private readonly Field field;
         private readonly Player player;
         private readonly char body;
@@ -274,14 +482,16 @@ namespace Snake
         }
         public char Body { get { return body; } }
         public ConsoleColor Color { get { return color; } }
+        public int X { get { return x; } }
+        public int Y { get { return y; } }
         public void Draw()
         {
             Random rand = new Random();
             bool flag = true;
             do
             {
-                int x = rand.Next(field.HeightFirst + 1, field.HeightLast - 1);
-                int y = rand.Next(field.WidthFirst + 1, field.WidthLast - 1);
+                x = rand.Next(field.HeightFirst + 1, field.HeightLast - 1);
+                y = rand.Next(field.WidthFirst + 1, field.WidthLast - 1);
                 if (!(x == player.X && y == player.Y))
                 {
                     Console.ForegroundColor = color;
