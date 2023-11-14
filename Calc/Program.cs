@@ -164,8 +164,12 @@ namespace Calc
             }
             Console.Write($"{values[values.Count - 1]} = ");*/
             #endregion
-            ReversePolishNotation rpn = new ReversePolishNotation();
-            Console.WriteLine(rpn.Calc(expression));
+            if (expression.Contains("(") || expression.Contains(")"))
+            {
+                ReversePolishNotation rpn = new ReversePolishNotation();
+                Console.WriteLine(rpn.Calc(expression));
+            }
+            else Console.WriteLine(Calc(expression));
         }
         #region OLD_CALC
         private static double Calc(string expression)
