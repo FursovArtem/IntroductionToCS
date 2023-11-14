@@ -43,7 +43,7 @@ namespace Point
         public void Teleport()
         {
             Random rand = new Random();
-            //Clear();
+            Clear();
             X = rand.Next(0, 120);
             Y = rand.Next(0, 30);
             Console.SetCursorPosition(X, Y);
