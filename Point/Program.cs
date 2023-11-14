@@ -56,7 +56,8 @@ namespace Point
         {
             Console.CursorVisible = false;
             ConsoleKey key;
-            Point point = new Point(60, 15, '$');
+            Random rand = new Random();
+            Point point = new Point(rand.Next(0, 120), rand.Next(0, 30), '$');
             do
             {
                 Console.ForegroundColor = point.Color;
